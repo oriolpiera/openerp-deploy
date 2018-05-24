@@ -1,0 +1,64 @@
+---
+- hosts: localhost
+  vars_files:
+    - variables.yml
+
+  tasks:
+  - name: Install Ubuntu packages for OpenERP Server
+    become: true
+    action: >
+      {{ ansible_pkg_mgr }} name={{ item }} state=present update_cache=yes
+    with_items:
+      - vim
+      - tmux
+      - libxslt1-dev
+      - python-dev
+      - libxml2-dev
+      - zlib1g-dev
+      - postgresql-server-dev-all
+      - libjpeg-dev
+      - redis-server
+      - postgresql
+      - libffi-dev
+      - mongodb-server
+      - virtualenvwrapper
+      - gcc
+      - g++
+      - python-pip
+      - pdftk
+
+  - name: Installing python libraries (PIP) using requirements.txt file
+    pip:
+      requirements: requirements.txt
+      chdir: "{{ ANSIBLE_HOME }}"
+      virtualenv: "{{ ENV_PATH }}"
+      virtualenv_command: virtualenv-2.7
+
+
+  - name: git clone repositories of GISCE
+    git: 
+         repo: "https://{{ GITHUB_USER }}:{{ GITHUB_PASSWORD }}@github.com/gisce/{{ item.repo }}.git"
+         dest: "{{ item.dest }}"
+         force: yes
+    with_items:
+      -
+        dest: "{{ SRC_PATH }}/aeroo"
+        repo: aeroo
+        version: openerp5
+      -
+        dest: "{{ SRC_PATH }}/areoolib"
+        repo: aeroolib
+        version: openerp5
+      -
+        dest: "{{ SRC_PATH }}/mongodb_backend"
+        repo: mongodb_backend
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/oorq"
+        repo: oorq
+        version: api_v5
+      -
+        dest: "{{ SRC_PATH }}/libFacturacioATR"
+        repo: libFacturacioATR
+        version: master
+...

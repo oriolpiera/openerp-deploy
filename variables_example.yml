@@ -1,0 +1,10 @@
+---
+ENV_NAME: nom_virtualenv
+ENV_PATH: path_virtualenv
+PYTHON_PATH: path_python_virtualenv
+ANSIBLE_HOME: path_absolut_daquest_repositori
+SRC_PATH: path_on_instalar_repositoris_github
+
+GITHUB_USER: nom_usuari_github
+GITHUB_PASSWORD: password_usuari_github
+...
