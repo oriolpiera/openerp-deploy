@@ -34,7 +34,6 @@
       virtualenv: "{{ ENV_PATH }}"
       virtualenv_command: virtualenv-2.7
 
-
   - name: git clone repositories of GISCE
     git: 
          repo: "https://{{ GITHUB_USER }}:{{ GITHUB_PASSWORD }}@github.com/gisce/{{ item.repo }}.git"
@@ -58,7 +57,83 @@
         repo: oorq
         version: api_v5
       -
+        dest: "{{ SRC_PATH }}/ooquery"
+        repo: ooquery
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/openerp-sentry"
+        repo: openerp-sentry
+        version: v5_legacy
+      -
+        dest: "{{ SRC_PATH }}/poweremail"
+        repo: poweremail
+        version: v5_backport
+      -
+        dest: "{{ SRC_PATH }}/poweremail_oorq"
+        repo: poweremail_oorq
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/spawn_oop"
+        repo: spawn_oop
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/ws_transactions"
+        repo: ws_transactions
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/sepa"
+        repo: sepa
+        version: master
+      -
         dest: "{{ SRC_PATH }}/libFacturacioATR"
         repo: libFacturacioATR
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/switching"
+        repo: switching
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/libComXML"
+        repo: libComXML
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/cchloader"
+        repo: cchloader
+        version: gisce
+      -
+        dest: "{{ SRC_PATH }}/sippers"
+        repo: sippers
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/ir_attachment_mongodb"
+        repo: ir_attachment_mongodb
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/qreu"
+        repo: qreu
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/enerdata"
+        repo: enerdata
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/ooop"
+        repo: ooop
+        version: xmlrpc_transaction
+      -
+        dest: "{{ SRC_PATH }}/arquia"
+        repo: arquia
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/sii"
+        repo: sii
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/empowering"
+        repo: empowering
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/gestionatr"
+        repo: gestionatr
         version: master
 ...
