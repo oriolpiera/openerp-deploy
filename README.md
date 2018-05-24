@@ -1,12 +1,15 @@
 # openerp-deploy
-Ansible project to deploy OpenERP server
+Vagrant & Ansible project to deploy OpenERP server
 
 # Requirements
 Install following packages:
-`apt install ansible ansible-playbook`
+`apt install ansible ansible-playbook vagrant`
 
 # Configure
 Make your own variables.yml, use variables_example.yml as example
 
 # Run
-Run as a root: `ansible-playbook erpdeploy.yml`
+Run `vagrant up`
+Go into erpserver `vagrant ssh erpserver`
+
+To run Ansible without Vagrant, run as a root: `ansible-playbook erpdeploy.yml`
