@@ -1,9 +1,27 @@
 ---
-- hosts: localhost
+- hosts: erpserver
   vars_files:
     - variables.yml
 
   tasks:
+
+  ### INI System users ###
+  - name: Create user erp
+    become: true
+    user:
+      name: erp
+      password: 'erp'
+      groups: # Empty by default, here we give it some groups
+       - sudo
+      state: present
+      shell: /bin/bash       # Defaults to /bin/bash
+      system: no             # Defaults to no
+      createhome: yes        # Defaults to yes
+      home: /home/erp  # Defaults to /home/<username>
+
+  ### END System uers ###
+
+  ### INI System packages ###
   - name: Install Ubuntu packages for OpenERP Server
     become: true
     action: >
@@ -11,7 +29,9 @@
     with_items:
       - vim
       - tmux
+      - htop
       - libxslt1-dev
+      - python2.7
       - python-dev
       - libxml2-dev
       - zlib1g-dev
@@ -26,15 +46,52 @@
       - g++
       - python-pip
       - pdftk
+      - python-virtualenv
+  ### END System packages ###
+
+  ### INI Python environment ###
+  - name: Create virtualenv erp
+    #shell: mkvirtualenv -p /usr/bin/python2 --system-site-packages erp
+    shell: ( cd /home/erp ; mkdir virtualenv; cd virtualenv; virtualenv -p /usr/bin/python2 erp ; source erp/bin/activate )
+    become: yes
+    become_user: erp
+    args:
+      executable: /bin/bash
+
+  #- name: Create virtualenv
+  #  command: mkvirtualenv -p /usr/bin/python2 --system-site-packages erp
+  #  become: yes
+  #  become_user: erp
+  ### END Python environment ###
+
+  ### INI Pip install requirements ###
+  - name: Copy requirements.txt file of pip packages
+    copy: src=requirements.txt dest=/home/erp
+    become: yes
+    become_user: erp
 
   - name: Installing python libraries (PIP) using requirements.txt file
     pip:
       requirements: requirements.txt
-      chdir: "{{ ANSIBLE_HOME }}"
-      virtualenv: "{{ ENV_PATH }}"
-      virtualenv_command: virtualenv-2.7
+      chdir: /home/erp
+      virtualenv: /home/erp/virtualenv/erp/bin
+    become: yes
+    become_user: erp
+  ### END Pip install requirements ###
+
+  ### INI Clone repositories ###
+  - name: Create src folder
+    file:
+      path: /home/erp/src
+      recurse: yes
+      state: directory
+      owner: erp
+      group: erp
+      mode: 0755
 
   - name: git clone repositories of GISCE
+    become: yes
+    become_user: erp
     git: 
          repo: "https://{{ GITHUB_USER }}:{{ GITHUB_PASSWORD }}@github.com/gisce/{{ item.repo }}.git"
          dest: "{{ item.dest }}"
