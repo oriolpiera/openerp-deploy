@@ -2,6 +2,8 @@
 - hosts: erpserver
   vars_files:
     - variables.yml
+  environment:
+    GITHUB_TOKEN: "{{ GITHUB_TOKEN }}"
 
   tasks:
 
@@ -47,22 +49,51 @@
       - python-pip
       - pdftk
       - python-virtualenv
+      - tig
   ### END System packages ###
 
   ### INI Python environment ###
   - name: Create virtualenv erp
-    #shell: mkvirtualenv -p /usr/bin/python2 --system-site-packages erp
     shell: ( cd /home/erp ; mkdir virtualenv; cd virtualenv; virtualenv -p /usr/bin/python2 erp ; source erp/bin/activate )
     become: yes
     become_user: erp
     args:
       executable: /bin/bash
-
-  #- name: Create virtualenv
-  #  command: mkvirtualenv -p /usr/bin/python2 --system-site-packages erp
-  #  become: yes
-  #  become_user: erp
   ### END Python environment ###
+
+  - name: Activate virtualenv 
+    shell: source /home/erp/virtualenv/erp/bin/activate
+    become: yes
+    become_user: erp
+    args:
+      executable: /bin/bash
+
+  - name: Creates .ssh directory for root
+    become: yes
+    become_user: erp
+    file: path=/home/erp/.ssh state=directory
+
+  # This public key is set on Github repo Settings under "Deploy keys"
+  - name: Upload the private key used for Github cloning
+    become: yes
+    become_user: erp
+    copy: 
+      src: "{{ SSH_KEY }}" 
+      dest: /home/erp/.ssh/github.pub
+
+  - name: Correct SSH deploy key permissions
+    become: yes
+    become_user: erp
+    file: dest=/home/erp/.ssh/github.pub mode=0600
+
+  - name: Set authorized key took from file
+    authorized_key:
+      user: erp
+      state: present
+      key: "https://github.com/{{ GITHUB_USER }}.keys"
+    become: yes
+    become_user: erp
+
 
   ### INI Pip install requirements ###
   - name: Copy requirements.txt file of pip packages
@@ -88,12 +119,14 @@
       owner: erp
       group: erp
       mode: 0755
+    become: yes
+    become_user: erp
 
   - name: git clone repositories of GISCE
     become: yes
     become_user: erp
     git: 
-         repo: "https://{{ GITHUB_USER }}:{{ GITHUB_PASSWORD }}@github.com/gisce/{{ item.repo }}.git"
+         repo: "git@github.com:gisce/{{ item.repo }}.git"
          dest: "{{ item.dest }}"
          force: yes
     with_items:
@@ -102,7 +135,7 @@
         repo: aeroo
         version: openerp5
       -
-        dest: "{{ SRC_PATH }}/areoolib"
+        dest: "{{ SRC_PATH }}/aeroolib"
         repo: aeroolib
         version: openerp5
       -
