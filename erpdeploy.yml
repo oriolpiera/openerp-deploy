@@ -4,6 +4,7 @@
     - variables.yml
   environment:
     GITHUB_TOKEN: "{{ GITHUB_TOKEN }}"
+    ANSIBLE_DEBUG: 1
 
   tasks:
 
@@ -62,7 +63,7 @@
   ### END Python environment ###
 
   - name: Activate virtualenv 
-    shell: source /home/erp/virtualenv/erp/bin/activate
+    shell: source "{{ ENV_PATH }}/bin/activate"
     become: yes
     become_user: erp
     args:
@@ -78,21 +79,18 @@
     become: yes
     become_user: erp
     copy: 
-      src: "{{ SSH_KEY }}" 
-      dest: /home/erp/.ssh/github.pub
+      src: "{{ LOCAL_SSH_KEY }}"
+      dest: "{{ REMOTE_SSH_KEY }}"
+      mode: 0600
 
-  - name: Correct SSH deploy key permissions
+  - name: Upload public key
     become: yes
     become_user: erp
-    file: dest=/home/erp/.ssh/github.pub mode=0600
+    copy:
+      src: "{{ LOCAL_SSH_KEY }}.pub"
+      dest: "{{ REMOTE_SSH_KEY }}.pub"
+      mode: 0644
 
-  - name: Set authorized key took from file
-    authorized_key:
-      user: erp
-      state: present
-      key: "https://github.com/{{ GITHUB_USER }}.keys"
-    become: yes
-    become_user: erp
 
 
   ### INI Pip install requirements ###
@@ -105,7 +103,7 @@
     pip:
       requirements: requirements.txt
       chdir: /home/erp
-      virtualenv: /home/erp/virtualenv/erp/bin
+      virtualenv: "{{ ENV_PATH }}/bin"
     become: yes
     become_user: erp
   ### END Pip install requirements ###
@@ -113,7 +111,7 @@
   ### INI Clone repositories ###
   - name: Create src folder
     file:
-      path: /home/erp/src
+      path: "{{ SRC_PATH }}"
       recurse: yes
       state: directory
       owner: erp
@@ -126,9 +124,12 @@
     become: yes
     become_user: erp
     git: 
-         repo: "git@github.com:gisce/{{ item.repo }}.git"
+         repo: "https://{{ GITHUB_USER }}:{{ GITHUB_PASSWORD }}@github.com/gisce/{{ item.repo }}.git"
          dest: "{{ item.dest }}"
-         force: yes
+         depth: 1
+         accept_hostkey: yes
+         clone: yes
+         force: yes #Avoid this if you want to keep local changes
     with_items:
       -
         dest: "{{ SRC_PATH }}/aeroo"
@@ -226,4 +227,103 @@
         dest: "{{ SRC_PATH }}/gestionatr"
         repo: gestionatr
         version: master
+  ### END Clone repositories
+
+
+  - name: git clone repositories of SomEnergia
+    become: yes
+    become_user: erp
+    git:
+         repo: "https://{{ GITHUB_USER }}:{{ GITHUB_PASSWORD }}@github.com/Som-Energia/{{ item.repo }}.git"
+         dest: "{{ item.dest }}"
+         force: yes
+    with_items:
+      -
+        dest: "{{ SRC_PATH }}/plantmeter"
+        repo: plantmeter
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/somenergia-generationkwh"
+        repo: somenergia-generationkwh
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/erp-empowering"
+        repo: erp-empowering
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/amoniak"
+        repo: amoniak
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/sermepa"
+        repo: sermepa
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/erppeek_wst"
+        repo: erppeek_wst
+        version: ws_transaction
+      -
+        dest: "{{ SRC_PATH }}/somenergia-utils"
+        repo: somenergia-utils
+        version: master
+      -
+        dest: "{{ SRC_PATH }}/somenergia-utils"
+        repo: somenergia-utils
+        version: master
+
+  - name: git clone repository of Facturae
+    become: yes
+    become_user: erp
+    git:
+         repo: "https://{{ GITHUB_USER }}:{{ GITHUB_PASSWORD }}@github.com/totaler/facturae.git"
+         dest: "{{ SRC_PATH }}/facturae"
+         force: yes
+
+  - name: Install local PIP packages
+    shell: "(cd {{ SRC_PATH }}/{{ item }}; source {{ ENV_PATH }}/bin/activate; pip install -e .)"
+    with_items:
+      - "aeroolib/aeroolib"
+      - sepa
+      - libFacturacioATR
+      - switching
+      - libComXML
+      - sippers
+      - qreu
+      - enerdata
+      - arquia
+      - ooop
+      - sermepa
+      - plantmeter
+      - somenergia-generationkwh
+      - facturae
+      - amoniak
+    become: yes
+    become_user: erp
+    args:
+      executable: /bin/bash
+
+  - name: git clone repository ERP
+    become: yes
+    become_user: erp
+    git:
+         repo: "https://{{ GITHUB_USER }}:{{ GITHUB_PASSWORD }}@github.com/gisce/erp.git"
+         dest: "{{ SRC_PATH }}/erp"
+         recursive: no #Avoid follow link submodules like erp-empowering
+         update: no
+         force: yes
+
+  - name: Fetch repository ERP
+    shell: "(cd {{ SRC_PATH }}/erp; git remote add some https://{{ GITHUB_USER }}:{{ GITHUB_PASSWORD }}@github.com/Som-Energia/erp; git fetch some; git checkout rolling )"
+    become: yes
+    become_user: erp
+    args:
+      executable: /bin/bash
+
+  - name: Link addons
+    shell: "(cd {{ SRC_PATH }}/erp; ./tools/link_addons.sh;)"
+    become: yes
+    become_user: erp
+    args:
+      executable: /bin/bash
+
 ...
