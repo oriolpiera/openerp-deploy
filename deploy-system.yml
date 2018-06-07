@@ -1,0 +1,45 @@
+---
+### INI System users ###
+- name: Create user erp
+  become: true
+  user:
+    name: erp
+    password: 'erp'
+    groups: # Empty by default, here we give it some groups
+     - sudo
+    state: present
+    shell: /bin/bash       # Defaults to /bin/bash
+    system: no             # Defaults to no
+    createhome: yes        # Defaults to yes
+    home: /home/erp  # Defaults to /home/<username>
+### END System users ###
+
+### INI System packages ###
+- name: Install Ubuntu packages for OpenERP Server
+  become: true
+  action: >
+    {{ ansible_pkg_mgr }} name={{ item }} state=present update_cache=yes
+  with_items:
+    - vim
+    - tmux
+    - htop
+    - libxslt1-dev
+    - python2.7
+    - python-dev
+    - libxml2-dev
+    - zlib1g-dev
+    - postgresql-server-dev-all
+    - libjpeg-dev
+    - redis-server
+    - postgresql
+    - libffi-dev
+    - mongodb-server
+    - virtualenvwrapper
+    - gcc
+    - g++
+    - python-pip
+    - pdftk
+    - python-virtualenv
+    - tig
+    - sshpass
+### END System packages ###

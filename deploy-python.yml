@@ -1,0 +1,15 @@
+---
+### INI Python environment ###
+- name: Create virtualenv erp
+  shell: ( cd /home/erp ; mkdir virtualenv; cd virtualenv; virtualenv -p /usr/bin/python2 erp ; source erp/bin/activate )
+  become: yes
+  become_user: erp
+  args:
+    executable: /bin/bash
+
+- name: Activate virtualenv 
+  shell: source "{{ ENV_PATH }}/bin/activate"
+  become: yes
+  become_user: erp
+  args:
+    executable: /bin/bash

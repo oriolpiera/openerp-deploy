@@ -1,0 +1,257 @@
+---
+- name: Creates .ssh directory for root
+  become: yes
+  become_user: erp
+  file: path=/home/erp/.ssh state=directory
+
+# This public key is set on Github repo Settings under "Deploy keys"
+- name: Upload the private key used for Github cloning
+  become: yes
+  become_user: erp
+  copy: 
+    src: "{{ LOCAL_SSH_KEY }}"
+    dest: "{{ REMOTE_SSH_KEY }}"
+    mode: 0600
+
+- name: Upload public key
+  become: yes
+  become_user: erp
+  copy:
+    src: "{{ LOCAL_SSH_KEY }}.pub"
+    dest: "{{ REMOTE_SSH_KEY }}.pub"
+    mode: 0644
+
+
+
+### INI Pip install requirements ###
+- name: Copy requirements.txt file of pip packages
+  copy: src=requirements.txt dest=/home/erp
+  become: yes
+  become_user: erp
+
+- name: Installing python libraries (PIP) using requirements.txt file
+  pip:
+    requirements: requirements.txt
+    chdir: /home/erp
+    virtualenv: "{{ ENV_PATH }}/bin"
+  become: yes
+  become_user: erp
+### END Pip install requirements ###
+
+### INI Clone repositories ###
+- name: Create src folder
+  file:
+    path: "{{ SRC_PATH }}"
+    recurse: yes
+    state: directory
+    owner: erp
+    group: erp
+    mode: 0755
+  become: yes
+  become_user: erp
+
+- name: git clone repositories of GISCE
+  become: yes
+  become_user: erp
+  git: 
+       repo: "https://{{ GITHUB_USER }}:{{ GITHUB_PASSWORD }}@github.com/gisce/{{ item.repo }}.git"
+       dest: "{{ item.dest }}"
+       depth: 1
+       accept_hostkey: yes
+       clone: yes
+       force: yes #Avoid this if you want to keep local changes
+  with_items:
+    -
+      dest: "{{ SRC_PATH }}/aeroo"
+      repo: aeroo
+      version: openerp5
+    -
+      dest: "{{ SRC_PATH }}/aeroolib"
+      repo: aeroolib
+      version: openerp5
+    -
+      dest: "{{ SRC_PATH }}/mongodb_backend"
+      repo: mongodb_backend
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/oorq"
+      repo: oorq
+      version: api_v5
+    -
+      dest: "{{ SRC_PATH }}/ooquery"
+      repo: ooquery
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/openerp-sentry"
+      repo: openerp-sentry
+      version: v5_legacy
+    -
+      dest: "{{ SRC_PATH }}/poweremail"
+      repo: poweremail
+      version: v5_backport
+    -
+      dest: "{{ SRC_PATH }}/poweremail_oorq"
+      repo: poweremail_oorq
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/spawn_oop"
+      repo: spawn_oop
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/ws_transactions"
+      repo: ws_transactions
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/sepa"
+      repo: sepa
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/libFacturacioATR"
+      repo: libFacturacioATR
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/switching"
+      repo: switching
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/libComXML"
+      repo: libComXML
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/cchloader"
+      repo: cchloader
+      version: gisce
+    -
+      dest: "{{ SRC_PATH }}/sippers"
+      repo: sippers
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/ir_attachment_mongodb"
+      repo: ir_attachment_mongodb
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/qreu"
+      repo: qreu
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/enerdata"
+      repo: enerdata
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/ooop"
+      repo: ooop
+      version: xmlrpc_transaction
+    -
+      dest: "{{ SRC_PATH }}/arquia"
+      repo: arquia
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/sii"
+      repo: sii
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/empowering"
+      repo: empowering
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/gestionatr"
+      repo: gestionatr
+      version: master
+### END Clone repositories
+
+
+- name: git clone repositories of SomEnergia
+  become: yes
+  become_user: erp
+  git:
+       repo: "https://{{ GITHUB_USER }}:{{ GITHUB_PASSWORD }}@github.com/Som-Energia/{{ item.repo }}.git"
+       dest: "{{ item.dest }}"
+       force: yes
+  with_items:
+    -
+      dest: "{{ SRC_PATH }}/plantmeter"
+      repo: plantmeter
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/somenergia-generationkwh"
+      repo: somenergia-generationkwh
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/erp-empowering"
+      repo: erp-empowering
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/amoniak"
+      repo: amoniak
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/sermepa"
+      repo: sermepa
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/erppeek_wst"
+      repo: erppeek_wst
+      version: ws_transaction
+    -
+      dest: "{{ SRC_PATH }}/somenergia-utils"
+      repo: somenergia-utils
+      version: master
+    -
+      dest: "{{ SRC_PATH }}/somenergia-utils"
+      repo: somenergia-utils
+      version: master
+
+- name: git clone repository of Facturae
+  become: yes
+  become_user: erp
+  git:
+       repo: "https://{{ GITHUB_USER }}:{{ GITHUB_PASSWORD }}@github.com/totaler/facturae.git"
+       dest: "{{ SRC_PATH }}/facturae"
+       force: yes
+
+- name: Install local PIP packages
+  shell: "(cd {{ SRC_PATH }}/{{ item }}; source {{ ENV_PATH }}/bin/activate; pip install -e .)"
+  with_items:
+    - "aeroolib/aeroolib"
+    - sepa
+    - libFacturacioATR
+    - switching
+    - libComXML
+    - sippers
+    - qreu
+    - enerdata
+    - arquia
+    - ooop
+    - sermepa
+    - plantmeter
+    - somenergia-generationkwh
+    - facturae
+    - amoniak
+  become: yes
+  become_user: erp
+  args:
+    executable: /bin/bash
+
+- name: git clone repository ERP
+  become: yes
+  become_user: erp
+  git:
+       repo: "https://{{ GITHUB_USER }}:{{ GITHUB_PASSWORD }}@github.com/gisce/erp.git"
+       dest: "{{ SRC_PATH }}/erp"
+       recursive: no #Avoid follow link submodules like erp-empowering
+       update: no
+       force: yes
+
+- name: Fetch repository ERP
+  shell: "(cd {{ SRC_PATH }}/erp; git remote add some https://{{ GITHUB_USER }}:{{ GITHUB_PASSWORD }}@github.com/Som-Energia/erp; git fetch some; git checkout rolling )"
+  become: yes
+  become_user: erp
+  args:
+    executable: /bin/bash
+
+- name: Link addons
+  shell: "(cd {{ SRC_PATH }}/erp; ./tools/link_addons.sh;)"
+  become: yes
+  become_user: erp
+  args:
+    executable: /bin/bash
